@@ -1,0 +1,44 @@
+#!/bin/sh
+# /etc/init.d/S99netmon - LP Network Monitor init script
+# Buildroot-compatible start-stop script
+
+DAEMON=/usr/bin/lp_netmon
+DAEMON_ARGS="/etc/netmon.conf"
+NAME=lp_netmon
+PIDFILE=/var/run/${NAME}.pid
+
+case "$1" in
+    start)
+        printf "Starting %s: " "$NAME"
+        # Stop the demo app if running
+        killall 86UI_demo 2>/dev/null || true
+        sleep 1
+        start-stop-daemon -S -b -m -p "$PIDFILE" -x "$DAEMON" -- $DAEMON_ARGS
+        echo "OK"
+        ;;
+    stop)
+        printf "Stopping %s: " "$NAME"
+        start-stop-daemon -K -p "$PIDFILE" -s TERM
+        rm -f "$PIDFILE"
+        echo "OK"
+        ;;
+    restart)
+        "$0" stop
+        sleep 1
+        "$0" start
+        ;;
+    status)
+        if [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
+            echo "$NAME is running (pid $(cat "$PIDFILE"))"
+        else
+            echo "$NAME is not running"
+            exit 1
+        fi
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart|status}"
+        exit 1
+        ;;
+esac
+
+exit 0
