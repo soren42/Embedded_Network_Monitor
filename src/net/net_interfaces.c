@@ -115,3 +115,30 @@ int net_enumerate_interfaces(net_iface_info_t *list, int max_count)
     close(sock);
     return count;
 }
+
+int net_set_promiscuous(const char *iface_name, int enable)
+{
+    if (!iface_name) return -1;
+
+    int sock = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sock < 0) return -1;
+
+    struct ifreq req;
+    memset(&req, 0, sizeof(req));
+    strncpy(req.ifr_name, iface_name, IFNAMSIZ - 1);
+
+    /* Read current flags */
+    if (ioctl(sock, SIOCGIFFLAGS, &req) < 0) {
+        close(sock);
+        return -1;
+    }
+
+    if (enable)
+        req.ifr_flags |= IFF_PROMISC;
+    else
+        req.ifr_flags &= ~IFF_PROMISC;
+
+    int ret = ioctl(sock, SIOCSIFFLAGS, &req);
+    close(sock);
+    return (ret < 0) ? -1 : 0;
+}

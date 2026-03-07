@@ -64,6 +64,9 @@ static const char *g_hidden_iface_prefixes[] = { "usb", NULL };
 /* WiFi auto-connect state */
 static int g_wifi_auto_connected;
 
+/* Promiscuous mode setting */
+static int g_promiscuous_enabled;
+
 /* LVGL timer handles */
 static lv_timer_t *g_fast_timer;
 static lv_timer_t *g_medium_timer;
@@ -106,6 +109,21 @@ static void load_infra_config(void)
         }
     }
     g_infra_ping_idx = 0;
+}
+
+/**
+ * Apply promiscuous mode setting to all active non-loopback interfaces.
+ */
+static void apply_promiscuous_mode(void)
+{
+    if (!g_promiscuous_enabled) return;
+
+    for (int i = 0; i < g_state.num_ifaces; i++) {
+        const char *name = g_state.ifaces[i].info.name;
+        if (net_set_promiscuous(name, 1) == 0) {
+            LOG_INFO("Promiscuous mode enabled on %s", name);
+        }
+    }
 }
 
 const net_state_t *net_get_state(void)
@@ -475,6 +493,10 @@ static void slow_timer_cb(lv_timer_t *timer)
                    sizeof(net_iface_state_t));
             g_state.ifaces[g_state.num_ifaces].info = iface_list[i];
             g_state.num_ifaces++;
+            /* Enable promiscuous mode on newly discovered interface */
+            if (g_promiscuous_enabled) {
+                net_set_promiscuous(iface_list[i].name, 1);
+            }
         }
     }
 
@@ -551,6 +573,13 @@ void net_collector_init(config_t *cfg)
         g_state.ifaces[i].info = iface_list[i];
     }
     g_state.num_ifaces = count;
+
+    /* Enable promiscuous mode if configured */
+    g_promiscuous_enabled = config_get_int(cfg, "promiscuous_mode",
+                                            APP_DEFAULT_PROMISCUOUS);
+    if (g_promiscuous_enabled) {
+        apply_promiscuous_mode();
+    }
 
     /* Initial stats read */
     net_stats_t initial_stats[APP_MAX_INTERFACES];

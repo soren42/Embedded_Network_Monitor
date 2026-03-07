@@ -29,6 +29,9 @@
 #define APP_DEFAULT_DNS_TARGET  "8.8.8.8"
 #define APP_DEFAULT_DNS_HOST    "google.com"
 
+/* Promiscuous mode: enable by default for network monitoring */
+#define APP_DEFAULT_PROMISCUOUS     1
+
 /* WiFi defaults */
 #define APP_DEFAULT_WIFI_SSID       "solarian"
 #define APP_DEFAULT_WIFI_PASSWORD   "S0l@r1@n"
