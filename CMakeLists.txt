@@ -29,12 +29,18 @@ add_subdirectory(lib/lvgl)
 # LVGL drivers
 add_subdirectory(lib/lv_drivers)
 
+# Vendored libraries
+set(LIB_SRCS
+    lib/mongoose/mongoose.c
+    lib/cJSON/cJSON.c
+)
+
 # Application sources
 file(GLOB_RECURSE APP_SRCS
     "src/*.c"
 )
 
-add_executable(${PROJECT_NAME} ${APP_SRCS})
+add_executable(${PROJECT_NAME} ${APP_SRCS} ${LIB_SRCS})
 
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -43,8 +49,11 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src/net
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ui
     ${CMAKE_CURRENT_SOURCE_DIR}/src/core
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/api
     ${CMAKE_CURRENT_SOURCE_DIR}/lib/lvgl
     ${CMAKE_CURRENT_SOURCE_DIR}/lib/lv_drivers
+    ${CMAKE_CURRENT_SOURCE_DIR}/lib/mongoose
+    ${CMAKE_CURRENT_SOURCE_DIR}/lib/cJSON
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE

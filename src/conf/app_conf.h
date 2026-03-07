@@ -44,6 +44,11 @@
 #define APP_ALERT_ERR_THRESHOLD 10
 #define APP_ALERT_HYSTERESIS    3
 
+/* API server */
+#define APP_API_DEFAULT_PORT    8080
+#define APP_BEACON_PORT         5300
+#define APP_BEACON_INTERVAL_MS  5000
+
 /* Paths */
 #define APP_CONFIG_PATH         "/etc/netmon.conf"
 #define APP_HISTORY_PATH        "/tmp/netmon_history.dat"

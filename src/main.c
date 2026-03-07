@@ -24,6 +24,7 @@
 #include "net_collector.h"
 #include "alerts.h"
 #include "data_store.h"
+#include "api_server.h"
 
 static volatile int g_running = 1;
 static config_t g_config;
@@ -104,6 +105,11 @@ int main(int argc, char *argv[])
     ui_manager_init();
     ui_manager_show(SCREEN_STATUS);
 
+    /* Initialize REST API server */
+    if (api_server_init(&g_config) < 0) {
+        LOG_WARN("API server failed to start (continuing without it)");
+    }
+
     LOG_INFO("Initialization complete, entering main loop");
 
     /* Main event loop */
@@ -114,11 +120,13 @@ int main(int argc, char *argv[])
         prev_ms = now_ms;
         lv_tick_inc(elapsed);
         lv_timer_handler();
+        api_server_poll();
         usleep(APP_TICK_PERIOD_MS * 1000);
     }
 
     /* Clean shutdown */
     LOG_INFO("Shutting down...");
+    api_server_shutdown();
     data_store_save();
     net_collector_shutdown();
     LOG_INFO("Goodbye");
