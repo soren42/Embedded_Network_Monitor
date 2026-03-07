@@ -63,11 +63,9 @@ void format_ip(uint32_t ip, char *buf, int buf_len)
 {
     if (!buf || buf_len <= 0) return;
 
+    const uint8_t *b = (const uint8_t *)&ip;
     snprintf(buf, (size_t)buf_len, "%u.%u.%u.%u",
-             (ip >> 24) & 0xFF,
-             (ip >> 16) & 0xFF,
-             (ip >>  8) & 0xFF,
-              ip        & 0xFF);
+             b[0], b[1], b[2], b[3]);
 }
 
 void format_mac(const uint8_t mac[6], char *buf, int buf_len)
