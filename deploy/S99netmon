@@ -1,10 +1,10 @@
 #!/bin/sh
-# /etc/init.d/S99netmon - LP Network Monitor init script
+# /etc/init.d/S99netmon - Embedded Network Monitor init script
 # Buildroot-compatible start-stop script
 
-DAEMON=/usr/bin/lp_netmon
+DAEMON=/usr/bin/embedded_netmon
 DAEMON_ARGS="/etc/netmon.conf"
-NAME=lp_netmon
+NAME=embedded_netmon
 PIDFILE=/var/run/${NAME}.pid
 
 case "$1" in
@@ -12,6 +12,8 @@ case "$1" in
         printf "Starting %s: " "$NAME"
         # Stop the demo app if running
         killall 86UI_demo 2>/dev/null || true
+        # Stop old binary name if running
+        killall lp_netmon 2>/dev/null || true
         sleep 1
         start-stop-daemon -S -b -m -p "$PIDFILE" -x "$DAEMON" -- $DAEMON_ARGS
         echo "OK"
