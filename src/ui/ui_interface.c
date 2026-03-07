@@ -6,6 +6,7 @@
 #include "ui_interface.h"
 #include "ui_theme.h"
 #include "ui_widgets.h"
+#include "ui_layout.h"
 #include "ui_manager.h"
 #include "net_collector.h"
 #include "utils.h"
@@ -70,7 +71,7 @@ static lv_obj_t *create_stat_row(lv_obj_t *parent, int pad_col)
     lv_obj_set_flex_align(row, LV_FLEX_ALIGN_START,
                           LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
     lv_obj_set_style_pad_column(row, pad_col, 0);
-    lv_obj_set_style_pad_row(row, 6, 0);
+    lv_obj_set_style_pad_row(row, ui_pad_small(), 0);
     lv_obj_clear_flag(row, LV_OBJ_FLAG_SCROLLABLE);
     return row;
 }
@@ -94,7 +95,7 @@ void ui_interface_create(lv_obj_t *parent)
     lv_obj_set_flex_flow(parent, LV_FLEX_FLOW_COLUMN);
     lv_obj_set_flex_align(parent, LV_FLEX_ALIGN_START,
                           LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
-    lv_obj_set_style_pad_row(parent, 6, 0);
+    lv_obj_set_style_pad_row(parent, ui_pad_small(), 0);
     lv_obj_add_flag(parent, LV_OBJ_FLAG_SCROLLABLE);
 
     /* ── Back button + header row ──────────────────────────────────── */
@@ -104,12 +105,12 @@ void ui_interface_create(lv_obj_t *parent)
     lv_obj_set_flex_flow(hdr_row, LV_FLEX_FLOW_ROW);
     lv_obj_set_flex_align(hdr_row, LV_FLEX_ALIGN_START,
                           LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-    lv_obj_set_style_pad_column(hdr_row, 8, 0);
+    lv_obj_set_style_pad_column(hdr_row, ui_scale(8), 0);
     lv_obj_clear_flag(hdr_row, LV_OBJ_FLAG_SCROLLABLE);
 
     ui_create_back_btn(hdr_row);
 
-    g_status_led = ui_create_status_led(hdr_row, 16);
+    g_status_led = ui_create_status_led(hdr_row, ui_scale(16));
 
     g_lbl_iface_name = lv_label_create(hdr_row);
     lv_label_set_text(g_lbl_iface_name, "---");
@@ -124,12 +125,12 @@ void ui_interface_create(lv_obj_t *parent)
     /* ── Info card ─────────────────────────────────────────────────── */
     lv_obj_t *info_card = ui_create_card(parent, LV_PCT(100), LV_SIZE_CONTENT);
     lv_obj_set_flex_flow(info_card, LV_FLEX_FLOW_COLUMN);
-    lv_obj_set_style_pad_all(info_card, 10, 0);
-    lv_obj_set_style_pad_row(info_card, 4, 0);
+    lv_obj_set_style_pad_all(info_card, ui_pad_normal(), 0);
+    lv_obj_set_style_pad_row(info_card, ui_scale(4), 0);
 
     ui_create_section_header(info_card, "Interface Info");
 
-    lv_obj_t *info_row = create_stat_row(info_card, 24);
+    lv_obj_t *info_row = create_stat_row(info_card, ui_scale(24));
     g_stat_ip         = ui_create_stat_label(info_row, "IP Address");
     g_stat_mac        = ui_create_stat_label(info_row, "MAC");
     g_stat_netmask    = ui_create_stat_label(info_row, "Netmask");
@@ -138,18 +139,18 @@ void ui_interface_create(lv_obj_t *parent)
     /* ── Live rates card ───────────────────────────────────────────── */
     lv_obj_t *rate_card = ui_create_card(parent, LV_PCT(100), LV_SIZE_CONTENT);
     lv_obj_set_flex_flow(rate_card, LV_FLEX_FLOW_COLUMN);
-    lv_obj_set_style_pad_all(rate_card, 10, 0);
-    lv_obj_set_style_pad_row(rate_card, 4, 0);
+    lv_obj_set_style_pad_all(rate_card, ui_pad_normal(), 0);
+    lv_obj_set_style_pad_row(rate_card, ui_scale(4), 0);
 
     ui_create_section_header(rate_card, "Live Traffic");
 
-    lv_obj_t *rate_row1 = create_stat_row(rate_card, 24);
+    lv_obj_t *rate_row1 = create_stat_row(rate_card, ui_scale(24));
     g_stat_rx_rate    = ui_create_stat_label(rate_row1, LV_SYMBOL_DOWN " RX Rate");
     g_stat_tx_rate    = ui_create_stat_label(rate_row1, LV_SYMBOL_UP " TX Rate");
     g_stat_rx_packets = ui_create_stat_label(rate_row1, "RX Packets");
     g_stat_tx_packets = ui_create_stat_label(rate_row1, "TX Packets");
 
-    lv_obj_t *rate_row2 = create_stat_row(rate_card, 24);
+    lv_obj_t *rate_row2 = create_stat_row(rate_card, ui_scale(24));
     g_stat_rx_errors = ui_create_stat_label(rate_row2, "RX Errors");
     g_stat_tx_errors = ui_create_stat_label(rate_row2, "TX Errors");
     g_stat_rx_drops  = ui_create_stat_label(rate_row2, "RX Drops");
@@ -158,12 +159,12 @@ void ui_interface_create(lv_obj_t *parent)
     /* ── Peaks and daily totals card ───────────────────────────────── */
     lv_obj_t *totals_card = ui_create_card(parent, LV_PCT(100), LV_SIZE_CONTENT);
     lv_obj_set_flex_flow(totals_card, LV_FLEX_FLOW_COLUMN);
-    lv_obj_set_style_pad_all(totals_card, 10, 0);
-    lv_obj_set_style_pad_row(totals_card, 4, 0);
+    lv_obj_set_style_pad_all(totals_card, ui_pad_normal(), 0);
+    lv_obj_set_style_pad_row(totals_card, ui_scale(4), 0);
 
     ui_create_section_header(totals_card, "Peaks & Daily Totals");
 
-    lv_obj_t *totals_row = create_stat_row(totals_card, 24);
+    lv_obj_t *totals_row = create_stat_row(totals_card, ui_scale(24));
     g_stat_peak_rx  = ui_create_stat_label(totals_row, "Peak RX");
     g_stat_peak_tx  = ui_create_stat_label(totals_row, "Peak TX");
     g_stat_daily_rx = ui_create_stat_label(totals_row, "Today RX");
@@ -172,13 +173,13 @@ void ui_interface_create(lv_obj_t *parent)
     /* ── WiFi card (hidden for wired interfaces) ───────────────────── */
     g_wifi_section = ui_create_card(parent, LV_PCT(100), LV_SIZE_CONTENT);
     lv_obj_set_flex_flow(g_wifi_section, LV_FLEX_FLOW_COLUMN);
-    lv_obj_set_style_pad_all(g_wifi_section, 10, 0);
-    lv_obj_set_style_pad_row(g_wifi_section, 4, 0);
+    lv_obj_set_style_pad_all(g_wifi_section, ui_pad_normal(), 0);
+    lv_obj_set_style_pad_row(g_wifi_section, ui_scale(4), 0);
     lv_obj_add_flag(g_wifi_section, LV_OBJ_FLAG_HIDDEN);
 
     ui_create_section_header(g_wifi_section, "WiFi");
 
-    lv_obj_t *wifi_row = create_stat_row(g_wifi_section, 24);
+    lv_obj_t *wifi_row = create_stat_row(g_wifi_section, ui_scale(24));
     g_stat_ssid    = ui_create_stat_label(wifi_row, "SSID");
     g_stat_signal  = ui_create_stat_label(wifi_row, "Signal");
     g_stat_quality = ui_create_stat_label(wifi_row, "Quality");
@@ -187,8 +188,8 @@ void ui_interface_create(lv_obj_t *parent)
     /* ── Traffic chart (60s short history) ─────────────────────────── */
     lv_obj_t *chart_card = ui_create_card(parent, LV_PCT(100), LV_SIZE_CONTENT);
     lv_obj_set_flex_flow(chart_card, LV_FLEX_FLOW_COLUMN);
-    lv_obj_set_style_pad_all(chart_card, 10, 0);
-    lv_obj_set_style_pad_row(chart_card, 4, 0);
+    lv_obj_set_style_pad_all(chart_card, ui_pad_normal(), 0);
+    lv_obj_set_style_pad_row(chart_card, ui_scale(4), 0);
 
     ui_create_section_header(chart_card, "Traffic (60s)");
 
@@ -197,13 +198,12 @@ void ui_interface_create(lv_obj_t *parent)
     lv_obj_remove_style_all(legend_row);
     lv_obj_set_size(legend_row, LV_PCT(100), LV_SIZE_CONTENT);
     lv_obj_set_flex_flow(legend_row, LV_FLEX_FLOW_ROW);
-    lv_obj_set_style_pad_column(legend_row, 16, 0);
+    lv_obj_set_style_pad_column(legend_row, ui_scale(16), 0);
     lv_obj_clear_flag(legend_row, LV_OBJ_FLAG_SCROLLABLE);
 
-    /* RX legend indicator */
     lv_obj_t *rx_dot = lv_obj_create(legend_row);
     lv_obj_remove_style_all(rx_dot);
-    lv_obj_set_size(rx_dot, 10, 10);
+    lv_obj_set_size(rx_dot, ui_scale(10), ui_scale(10));
     lv_obj_set_style_bg_color(rx_dot, COLOR_CHART_RX, 0);
     lv_obj_set_style_bg_opa(rx_dot, LV_OPA_COVER, 0);
     lv_obj_set_style_radius(rx_dot, LV_RADIUS_CIRCLE, 0);
@@ -213,10 +213,9 @@ void ui_interface_create(lv_obj_t *parent)
     lv_obj_set_style_text_font(rx_lbl, ui_font_small(), 0);
     lv_obj_set_style_text_color(rx_lbl, COLOR_CHART_RX, 0);
 
-    /* TX legend indicator */
     lv_obj_t *tx_dot = lv_obj_create(legend_row);
     lv_obj_remove_style_all(tx_dot);
-    lv_obj_set_size(tx_dot, 10, 10);
+    lv_obj_set_size(tx_dot, ui_scale(10), ui_scale(10));
     lv_obj_set_style_bg_color(tx_dot, COLOR_CHART_TX, 0);
     lv_obj_set_style_bg_opa(tx_dot, LV_OPA_COVER, 0);
     lv_obj_set_style_radius(tx_dot, LV_RADIUS_CIRCLE, 0);
@@ -228,7 +227,7 @@ void ui_interface_create(lv_obj_t *parent)
 
     /* Chart widget */
     g_chart = lv_chart_create(chart_card);
-    lv_obj_set_size(g_chart, LV_PCT(100), 200);
+    lv_obj_set_size(g_chart, LV_PCT(100), ui_scale(200));
     lv_chart_set_type(g_chart, LV_CHART_TYPE_LINE);
     lv_chart_set_point_count(g_chart, APP_HISTORY_SHORT_LEN);
     lv_chart_set_div_line_count(g_chart, 4, 0);
@@ -237,7 +236,7 @@ void ui_interface_create(lv_obj_t *parent)
     lv_obj_set_style_bg_color(g_chart, COLOR_CARD, 0);
     lv_obj_set_style_bg_opa(g_chart, LV_OPA_COVER, 0);
     lv_obj_set_style_border_width(g_chart, 0, 0);
-    lv_obj_set_style_pad_all(g_chart, 4, 0);
+    lv_obj_set_style_pad_all(g_chart, ui_scale(4), 0);
     lv_obj_set_style_line_color(g_chart, lv_color_hex(0x2A2A4A), LV_PART_MAIN);
     lv_obj_set_style_size(g_chart, 0, LV_PART_INDICATOR);
     lv_obj_set_style_line_width(g_chart, 2, LV_PART_ITEMS);
@@ -381,7 +380,6 @@ void ui_interface_update(void)
     net_get_short_history(g_iface_idx, &hist, &count, &head, &capacity);
 
     if (hist && count > 0) {
-        /* Find max for auto-scaling */
         lv_coord_t max_val = 1;
         for (int j = 0; j < count; j++) {
             int idx = (head - count + j + capacity) % capacity;
@@ -393,7 +391,6 @@ void ui_interface_update(void)
         lv_chart_set_range(g_chart, LV_CHART_AXIS_PRIMARY_Y,
                            0, max_val + max_val / 10 + 1);
 
-        /* Clear and refill series */
         lv_chart_set_all_value(g_chart, g_ser_rx, 0);
         lv_chart_set_all_value(g_chart, g_ser_tx, 0);
 

@@ -6,6 +6,7 @@
 #include "ui_connections.h"
 #include "ui_theme.h"
 #include "ui_widgets.h"
+#include "ui_layout.h"
 #include "ui_manager.h"
 #include "net_collector.h"
 #include "utils.h"
@@ -76,15 +77,15 @@ void ui_connections_create(lv_obj_t *parent)
     /* Table */
     g_table = lv_table_create(parent);
     lv_obj_set_size(g_table, LV_PCT(100), LV_SIZE_CONTENT);
-    lv_obj_set_style_max_height(g_table, APP_CONTENT_H - 80, 0);
+    lv_obj_set_style_max_height(g_table, ui_content_h() - ui_scale(80), 0);
     lv_obj_add_flag(g_table, LV_OBJ_FLAG_SCROLLABLE);
 
     /* Column count and widths */
     lv_table_set_col_cnt(g_table, 4);
-    lv_table_set_col_width(g_table, 0, 80);   /* Protocol  */
-    lv_table_set_col_width(g_table, 1, 230);  /* Local     */
-    lv_table_set_col_width(g_table, 2, 230);  /* Remote    */
-    lv_table_set_col_width(g_table, 3, 140);  /* State     */
+    lv_table_set_col_width(g_table, 0, ui_scale(80));   /* Protocol  */
+    lv_table_set_col_width(g_table, 1, ui_scale(230));  /* Local     */
+    lv_table_set_col_width(g_table, 2, ui_scale(230));  /* Remote    */
+    lv_table_set_col_width(g_table, 3, ui_scale(140));  /* State     */
 
     /* Header row */
     lv_table_set_cell_value(g_table, 0, 0, "Proto");

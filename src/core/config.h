@@ -1,7 +1,7 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#define CONFIG_MAX_ENTRIES  32
+#define CONFIG_MAX_ENTRIES  64
 #define CONFIG_KEY_MAX      64
 #define CONFIG_VAL_MAX      128
 
@@ -22,6 +22,8 @@ int         config_get_int(const config_t *cfg, const char *key,
                            int default_val);
 double      config_get_double(const config_t *cfg, const char *key,
                               double default_val);
+void        config_set_str(config_t *cfg, const char *key, const char *value);
+void        config_set_int(config_t *cfg, const char *key, int value);
 int         config_save(const config_t *cfg, const char *path);
 
 #endif /* CONFIG_H */

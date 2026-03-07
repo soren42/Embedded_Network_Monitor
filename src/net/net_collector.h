@@ -9,6 +9,8 @@
 #include <stdint.h>
 #include "app_conf.h"
 #include "config.h"
+#include "net_infra.h"
+#include "net_discovery.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -121,6 +123,9 @@ typedef struct {
     int                num_connections;
     net_connection_t   connections[APP_MAX_CONNECTIONS];
 
+    int                num_infra;
+    infra_device_t     infra[APP_MAX_INFRA_DEVICES];
+
     uint32_t           uptime_sec;
     uint32_t           mem_total_kb;
     uint32_t           mem_free_kb;
@@ -133,9 +138,19 @@ typedef struct {
 const net_state_t *net_get_state(void);
 
 /**
+ * Get the mutable global network state (for settings to update infra).
+ */
+net_state_t *net_get_state_mut(void);
+
+/**
+ * Get the config object (for settings to read/write).
+ */
+config_t *net_get_config(void);
+
+/**
  * Initialize the network collector and register LVGL timers.
  */
-void net_collector_init(const config_t *cfg);
+void net_collector_init(config_t *cfg);
 
 /**
  * Stop all collectors and free resources.
@@ -158,6 +173,18 @@ void net_get_short_history(int iface_idx, const net_history_sample_t **out_data,
  */
 void net_get_long_history(int iface_idx, const net_history_sample_t **out_data,
                           int *out_count, int *out_head, int *out_capacity);
+
+/**
+ * Get the WAN discovery state (next-hop detection, link quality).
+ */
+const wan_discovery_t *net_get_wan_discovery(void);
+
+/**
+ * Check if an interface name should be hidden from the UI.
+ * @param name  Interface name (e.g. "usb0")
+ * @return 1 if hidden, 0 if visible
+ */
+int net_iface_is_hidden(const char *name);
 
 #ifdef __cplusplus
 }

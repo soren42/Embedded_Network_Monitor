@@ -21,7 +21,10 @@
 #include "net_dns.h"
 #include "net_arp.h"
 #include "net_wifi.h"
+#include "net_wifi_mgr.h"
 #include "net_connections.h"
+#include "net_infra.h"
+#include "net_discovery.h"
 #include "alerts.h"
 #include "log.h"
 
@@ -41,21 +44,99 @@ static struct timespec g_prev_time;
 
 /* Global state */
 static net_state_t g_state;
-static const config_t *g_cfg;
+static config_t *g_cfg;
 
 /* Minute accumulation for long history */
 static float g_minute_rx_acc[APP_MAX_INTERFACES];
 static float g_minute_tx_acc[APP_MAX_INTERFACES];
 static int g_minute_sample_count;
 
+/* Infrastructure cycling index */
+static int g_infra_ping_idx;
+
+/* WAN discovery state */
+static wan_discovery_t g_wan_discovery;
+static int g_wan_discovery_tick;
+
+/* Hidden interface prefixes (filtered from UI) */
+static const char *g_hidden_iface_prefixes[] = { "usb", NULL };
+
+/* WiFi auto-connect state */
+static int g_wifi_auto_connected;
+
 /* LVGL timer handles */
 static lv_timer_t *g_fast_timer;
 static lv_timer_t *g_medium_timer;
 static lv_timer_t *g_slow_timer;
 
+/**
+ * Load infrastructure device configuration.
+ */
+static void load_infra_config(void)
+{
+    int count = config_get_int(g_cfg, "infra_count", 0);
+    if (count > APP_MAX_INFRA_DEVICES) count = APP_MAX_INFRA_DEVICES;
+    g_state.num_infra = count;
+
+    for (int i = 0; i < count; i++) {
+        char key[64];
+        infra_device_t *dev = &g_state.infra[i];
+
+        snprintf(key, sizeof(key), "infra_%d_name", i);
+        const char *name = config_get_str(g_cfg, key, "Device");
+        strncpy(dev->name, name, sizeof(dev->name) - 1);
+        dev->name[sizeof(dev->name) - 1] = '\0';
+
+        snprintf(key, sizeof(key), "infra_%d_ip", i);
+        const char *ip = config_get_str(g_cfg, key, "");
+        strncpy(dev->ip_str, ip, sizeof(dev->ip_str) - 1);
+        dev->ip_str[sizeof(dev->ip_str) - 1] = '\0';
+
+        snprintf(key, sizeof(key), "infra_%d_type", i);
+        const char *type = config_get_str(g_cfg, key, "other");
+        dev->type = infra_parse_type(type);
+
+        dev->enabled = (dev->ip_str[0] != '\0') ? 1 : 0;
+        dev->reachable = 0;
+        dev->latency_ms = 0.0;
+        dev->consecutive_fails = 0;
+
+        if (dev->enabled) {
+            LOG_INFO("Infra device %d: %s (%s)", i, dev->name, dev->ip_str);
+        }
+    }
+    g_infra_ping_idx = 0;
+}
+
 const net_state_t *net_get_state(void)
 {
     return &g_state;
+}
+
+net_state_t *net_get_state_mut(void)
+{
+    return &g_state;
+}
+
+config_t *net_get_config(void)
+{
+    return (config_t *)g_cfg;
+}
+
+const wan_discovery_t *net_get_wan_discovery(void)
+{
+    return &g_wan_discovery;
+}
+
+int net_iface_is_hidden(const char *name)
+{
+    if (!name) return 0;
+    for (int i = 0; g_hidden_iface_prefixes[i]; i++) {
+        if (strncmp(name, g_hidden_iface_prefixes[i],
+                    strlen(g_hidden_iface_prefixes[i])) == 0)
+            return 1;
+    }
+    return 0;
 }
 
 void net_get_short_history(int iface_idx, const net_history_sample_t **out_data,
@@ -224,61 +305,64 @@ static void fast_timer_cb(lv_timer_t *timer)
                     (now.tv_nsec - g_prev_time.tv_nsec) / 1e9;
         if (dt > 0.0) {
             for (int i = 0; i < cur_count; i++) {
-                /* Find matching previous interface */
-                for (int j = 0; j < g_state.num_ifaces; j++) {
-                    if (strcmp(cur_stats[i].name, g_prev_stats[j].name) == 0) {
-                        net_iface_state_t *st = NULL;
-                        /* Find matching state entry */
-                        for (int k = 0; k < g_state.num_ifaces; k++) {
-                            if (strcmp(g_state.ifaces[k].info.name, cur_stats[i].name) == 0) {
-                                st = &g_state.ifaces[k];
-                                break;
-                            }
-                        }
-                        if (!st) break;
-
-                        uint64_t drx = cur_stats[i].rx_bytes - g_prev_stats[j].rx_bytes;
-                        uint64_t dtx = cur_stats[i].tx_bytes - g_prev_stats[j].tx_bytes;
-
-                        st->rates.rx_bytes_per_sec = drx / dt;
-                        st->rates.tx_bytes_per_sec = dtx / dt;
-                        st->rates.rx_packets_per_sec =
-                            (cur_stats[i].rx_packets - g_prev_stats[j].rx_packets) / dt;
-                        st->rates.tx_packets_per_sec =
-                            (cur_stats[i].tx_packets - g_prev_stats[j].tx_packets) / dt;
-                        st->rates.rx_errors_per_sec =
-                            (cur_stats[i].rx_errors - g_prev_stats[j].rx_errors) / dt;
-                        st->rates.tx_errors_per_sec =
-                            (cur_stats[i].tx_errors - g_prev_stats[j].tx_errors) / dt;
-
-                        /* Update peaks */
-                        if (st->rates.rx_bytes_per_sec > st->peak_rx_bps)
-                            st->peak_rx_bps = st->rates.rx_bytes_per_sec;
-                        if (st->rates.tx_bytes_per_sec > st->peak_tx_bps)
-                            st->peak_tx_bps = st->rates.tx_bytes_per_sec;
-
-                        /* Update daily totals */
-                        st->rx_bytes_today += drx;
-                        st->tx_bytes_today += dtx;
-
-                        /* Push short history */
-                        for (int k = 0; k < g_state.num_ifaces; k++) {
-                            if (strcmp(g_state.ifaces[k].info.name, cur_stats[i].name) == 0) {
-                                history_push(g_short_history[k],
-                                             &g_short_head[k], &g_short_count[k],
-                                             APP_HISTORY_SHORT_LEN,
-                                             (float)st->rates.rx_bytes_per_sec,
-                                             (float)st->rates.tx_bytes_per_sec);
-
-                                /* Accumulate for long history */
-                                g_minute_rx_acc[k] += (float)st->rates.rx_bytes_per_sec;
-                                g_minute_tx_acc[k] += (float)st->rates.tx_bytes_per_sec;
-                                break;
-                            }
-                        }
+                /* Find this interface in the state array (single lookup) */
+                int si_idx = -1;
+                for (int k = 0; k < g_state.num_ifaces; k++) {
+                    if (strcmp(g_state.ifaces[k].info.name,
+                              cur_stats[i].name) == 0) {
+                        si_idx = k;
                         break;
                     }
                 }
+                if (si_idx < 0) continue;
+
+                /* Find matching previous stats entry */
+                int prev_idx = -1;
+                for (int j = 0; j < g_state.num_ifaces; j++) {
+                    if (strcmp(g_prev_stats[j].name,
+                              cur_stats[i].name) == 0) {
+                        prev_idx = j;
+                        break;
+                    }
+                }
+                if (prev_idx < 0) continue;
+
+                net_iface_state_t *st = &g_state.ifaces[si_idx];
+
+                uint64_t drx = cur_stats[i].rx_bytes - g_prev_stats[prev_idx].rx_bytes;
+                uint64_t dtx = cur_stats[i].tx_bytes - g_prev_stats[prev_idx].tx_bytes;
+
+                st->rates.rx_bytes_per_sec = drx / dt;
+                st->rates.tx_bytes_per_sec = dtx / dt;
+                st->rates.rx_packets_per_sec =
+                    (cur_stats[i].rx_packets - g_prev_stats[prev_idx].rx_packets) / dt;
+                st->rates.tx_packets_per_sec =
+                    (cur_stats[i].tx_packets - g_prev_stats[prev_idx].tx_packets) / dt;
+                st->rates.rx_errors_per_sec =
+                    (cur_stats[i].rx_errors - g_prev_stats[prev_idx].rx_errors) / dt;
+                st->rates.tx_errors_per_sec =
+                    (cur_stats[i].tx_errors - g_prev_stats[prev_idx].tx_errors) / dt;
+
+                /* Update peaks */
+                if (st->rates.rx_bytes_per_sec > st->peak_rx_bps)
+                    st->peak_rx_bps = st->rates.rx_bytes_per_sec;
+                if (st->rates.tx_bytes_per_sec > st->peak_tx_bps)
+                    st->peak_tx_bps = st->rates.tx_bytes_per_sec;
+
+                /* Update daily totals */
+                st->rx_bytes_today += drx;
+                st->tx_bytes_today += dtx;
+
+                /* Push short history */
+                history_push(g_short_history[si_idx],
+                             &g_short_head[si_idx], &g_short_count[si_idx],
+                             APP_HISTORY_SHORT_LEN,
+                             (float)st->rates.rx_bytes_per_sec,
+                             (float)st->rates.tx_bytes_per_sec);
+
+                /* Accumulate for long history */
+                g_minute_rx_acc[si_idx] += (float)st->rates.rx_bytes_per_sec;
+                g_minute_tx_acc[si_idx] += (float)st->rates.tx_bytes_per_sec;
             }
         }
     }
@@ -339,6 +423,28 @@ static void medium_timer_cb(lv_timer_t *timer)
         }
     }
 
+    /* Ping one infrastructure device per tick (staggered) */
+    if (g_state.num_infra > 0) {
+        /* Find next enabled device */
+        for (int attempts = 0; attempts < g_state.num_infra; attempts++) {
+            int idx = g_infra_ping_idx % g_state.num_infra;
+            g_infra_ping_idx = (g_infra_ping_idx + 1) % g_state.num_infra;
+            infra_device_t *dev = &g_state.infra[idx];
+            if (!dev->enabled) continue;
+
+            double lat = 0.0;
+            int ok = net_ping(dev->ip_str, 1000, &lat);
+            dev->reachable = ok;
+            dev->latency_ms = lat;
+            if (ok) {
+                dev->consecutive_fails = 0;
+            } else {
+                dev->consecutive_fails++;
+            }
+            break; /* only ping one per tick */
+        }
+    }
+
     /* Run alert checks */
     alerts_check(&g_state);
 }
@@ -385,17 +491,58 @@ static void slow_timer_cb(lv_timer_t *timer)
 
     /* ARP table */
     g_state.num_arp = net_read_arp(g_state.arp_table, APP_MAX_ARP_ENTRIES);
+
+    /* WAN discovery - run every other slow tick (~60s) */
+    g_wan_discovery_tick++;
+    if (g_wan_discovery_tick >= 2) {
+        g_wan_discovery_tick = 0;
+        const char *gw = config_get_str(g_cfg, "ping_target",
+                                         APP_DEFAULT_PING_TARGET);
+        discovery_trace_wan(gw, &g_wan_discovery);
+
+        /* Quality test if we found a next hop */
+        if (g_wan_discovery.num_hops >= 2 &&
+            g_wan_discovery.hops[1].reachable) {
+            discovery_wan_quality(g_wan_discovery.hops[1].ip_str,
+                                  &g_wan_discovery);
+        }
+    }
+
+    /* WiFi manager status update */
+    wifi_mgr_update();
 }
 
-void net_collector_init(const config_t *cfg)
+void net_collector_init(config_t *cfg)
 {
     g_cfg = cfg;
     memset(&g_state, 0, sizeof(g_state));
     memset(g_short_history, 0, sizeof(g_short_history));
     memset(g_long_history, 0, sizeof(g_long_history));
     memset(g_prev_stats, 0, sizeof(g_prev_stats));
+    memset(&g_wan_discovery, 0, sizeof(g_wan_discovery));
     g_prev_valid = 0;
     g_minute_sample_count = 0;
+    g_wan_discovery_tick = 0;
+    g_wifi_auto_connected = 0;
+
+    /* Load infrastructure device config */
+    load_infra_config();
+
+    /* Initialize WiFi manager */
+    if (wifi_mgr_init() == 0) {
+        /* Auto-connect if configured and not already connected */
+        const wifi_mgr_state_t *ws = wifi_mgr_get_state();
+        if (!ws->connected) {
+            const char *wifi_ssid = config_get_str(cfg, "wifi_ssid", "");
+            const char *wifi_pass = config_get_str(cfg, "wifi_password", "");
+            int wifi_enabled = config_get_int(cfg, "wifi_enabled", 1);
+            if (wifi_enabled && wifi_ssid[0] != '\0') {
+                LOG_INFO("Auto-connecting to WiFi: %s", wifi_ssid);
+                wifi_mgr_connect(wifi_ssid, wifi_pass);
+                g_wifi_auto_connected = 1;
+            }
+        }
+    }
 
     /* Initial interface enumeration */
     net_iface_info_t iface_list[APP_MAX_INTERFACES];

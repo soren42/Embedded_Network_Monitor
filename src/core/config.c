@@ -102,6 +102,27 @@ double config_get_double(const config_t *cfg, const char *key,
     return result;
 }
 
+void config_set_str(config_t *cfg, const char *key, const char *value)
+{
+    if (!cfg || !key || !value) return;
+
+    int idx = config_find(cfg, key);
+    if (idx >= 0) {
+        snprintf(cfg->entries[idx].value, CONFIG_VAL_MAX, "%s", value);
+    } else if (cfg->count < CONFIG_MAX_ENTRIES) {
+        snprintf(cfg->entries[cfg->count].key,   CONFIG_KEY_MAX, "%s", key);
+        snprintf(cfg->entries[cfg->count].value,  CONFIG_VAL_MAX, "%s", value);
+        cfg->count++;
+    }
+}
+
+void config_set_int(config_t *cfg, const char *key, int value)
+{
+    char buf[32];
+    snprintf(buf, sizeof(buf), "%d", value);
+    config_set_str(cfg, key, buf);
+}
+
 int config_save(const config_t *cfg, const char *path)
 {
     if (!cfg || !path) return -1;

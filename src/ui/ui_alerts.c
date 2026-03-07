@@ -6,6 +6,7 @@
 #include "ui_alerts.h"
 #include "ui_theme.h"
 #include "ui_widgets.h"
+#include "ui_layout.h"
 #include "ui_manager.h"
 #include "alerts.h"
 #include "utils.h"
@@ -124,13 +125,13 @@ void ui_alerts_create(lv_obj_t *parent)
     g_list = lv_obj_create(parent);
     lv_obj_remove_style_all(g_list);
     lv_obj_set_size(g_list, LV_PCT(100), LV_SIZE_CONTENT);
-    lv_obj_set_style_max_height(g_list, APP_CONTENT_H - 120, 0);
+    lv_obj_set_style_max_height(g_list, ui_content_h() - ui_scale(120), 0);
     lv_obj_set_style_bg_color(g_list, COLOR_CARD, 0);
     lv_obj_set_style_bg_opa(g_list, LV_OPA_COVER, 0);
     lv_obj_set_style_radius(g_list, 8, 0);
     lv_obj_set_style_border_color(g_list, COLOR_CARD_BORDER, 0);
     lv_obj_set_style_border_width(g_list, 1, 0);
-    lv_obj_set_style_pad_all(g_list, 8, 0);
+    lv_obj_set_style_pad_all(g_list, ui_pad_normal(), 0);
     lv_obj_set_flex_flow(g_list, LV_FLEX_FLOW_COLUMN);
     lv_obj_add_flag(g_list, LV_OBJ_FLAG_SCROLLABLE);
 
@@ -142,7 +143,7 @@ void ui_alerts_create(lv_obj_t *parent)
 
     /* Clear All button */
     lv_obj_t *btn = lv_btn_create(parent);
-    lv_obj_set_size(btn, 140, 44);
+    lv_obj_set_size(btn, ui_scale(140), ui_scale(44));
     lv_obj_set_style_bg_color(btn, COLOR_DANGER, 0);
     lv_obj_set_style_bg_opa(btn, LV_OPA_COVER, 0);
     lv_obj_set_style_radius(btn, 8, 0);

@@ -6,6 +6,7 @@
 #include "ui_traffic.h"
 #include "ui_theme.h"
 #include "ui_widgets.h"
+#include "ui_layout.h"
 #include "ui_manager.h"
 #include "net_collector.h"
 #include "utils.h"
@@ -92,7 +93,7 @@ void ui_traffic_create(lv_obj_t *parent)
     lv_obj_set_flex_flow(parent, LV_FLEX_FLOW_COLUMN);
     lv_obj_set_flex_align(parent, LV_FLEX_ALIGN_START,
                           LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
-    lv_obj_set_style_pad_row(parent, 8, 0);
+    lv_obj_set_style_pad_row(parent, ui_pad_small(), 0);
     lv_obj_add_flag(parent, LV_OBJ_FLAG_SCROLLABLE);
 
     /* ── Title row with interface selector ─────────────────────────── */
@@ -102,7 +103,7 @@ void ui_traffic_create(lv_obj_t *parent)
     lv_obj_set_flex_flow(hdr_row, LV_FLEX_FLOW_ROW);
     lv_obj_set_flex_align(hdr_row, LV_FLEX_ALIGN_SPACE_BETWEEN,
                           LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-    lv_obj_set_style_pad_column(hdr_row, 12, 0);
+    lv_obj_set_style_pad_column(hdr_row, ui_scale(12), 0);
     lv_obj_clear_flag(hdr_row, LV_OBJ_FLAG_SCROLLABLE);
 
     lv_obj_t *title = lv_label_create(hdr_row);
@@ -112,14 +113,14 @@ void ui_traffic_create(lv_obj_t *parent)
 
     /* Dropdown for interface selection */
     g_dropdown = lv_dropdown_create(hdr_row);
-    lv_obj_set_width(g_dropdown, 160);
+    lv_obj_set_width(g_dropdown, ui_scale(160));
     lv_obj_set_style_bg_color(g_dropdown, COLOR_CARD, 0);
     lv_obj_set_style_bg_opa(g_dropdown, LV_OPA_COVER, 0);
     lv_obj_set_style_border_color(g_dropdown, COLOR_CARD_BORDER, 0);
     lv_obj_set_style_border_width(g_dropdown, 1, 0);
     lv_obj_set_style_text_color(g_dropdown, COLOR_TEXT_PRIMARY, 0);
     lv_obj_set_style_text_font(g_dropdown, ui_font_small(), 0);
-    lv_obj_set_style_pad_all(g_dropdown, 6, 0);
+    lv_obj_set_style_pad_all(g_dropdown, ui_pad_small(), 0);
 
     /* Dropdown list styling */
     lv_obj_t *list = lv_dropdown_get_list(g_dropdown);
@@ -140,8 +141,8 @@ void ui_traffic_create(lv_obj_t *parent)
     /* ── Chart card ────────────────────────────────────────────────── */
     lv_obj_t *chart_card = ui_create_card(parent, LV_PCT(100), LV_SIZE_CONTENT);
     lv_obj_set_flex_flow(chart_card, LV_FLEX_FLOW_COLUMN);
-    lv_obj_set_style_pad_all(chart_card, 10, 0);
-    lv_obj_set_style_pad_row(chart_card, 6, 0);
+    lv_obj_set_style_pad_all(chart_card, ui_pad_normal(), 0);
+    lv_obj_set_style_pad_row(chart_card, ui_pad_small(), 0);
 
     /* Legend row */
     lv_obj_t *legend_row = lv_obj_create(chart_card);
@@ -150,13 +151,13 @@ void ui_traffic_create(lv_obj_t *parent)
     lv_obj_set_flex_flow(legend_row, LV_FLEX_FLOW_ROW);
     lv_obj_set_flex_align(legend_row, LV_FLEX_ALIGN_CENTER,
                           LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-    lv_obj_set_style_pad_column(legend_row, 16, 0);
+    lv_obj_set_style_pad_column(legend_row, ui_scale(16), 0);
     lv_obj_clear_flag(legend_row, LV_OBJ_FLAG_SCROLLABLE);
 
     /* RX legend */
     lv_obj_t *rx_dot = lv_obj_create(legend_row);
     lv_obj_remove_style_all(rx_dot);
-    lv_obj_set_size(rx_dot, 12, 12);
+    lv_obj_set_size(rx_dot, ui_scale(12), ui_scale(12));
     lv_obj_set_style_bg_color(rx_dot, COLOR_CHART_RX, 0);
     lv_obj_set_style_bg_opa(rx_dot, LV_OPA_COVER, 0);
     lv_obj_set_style_radius(rx_dot, LV_RADIUS_CIRCLE, 0);
@@ -169,7 +170,7 @@ void ui_traffic_create(lv_obj_t *parent)
     /* TX legend */
     lv_obj_t *tx_dot = lv_obj_create(legend_row);
     lv_obj_remove_style_all(tx_dot);
-    lv_obj_set_size(tx_dot, 12, 12);
+    lv_obj_set_size(tx_dot, ui_scale(12), ui_scale(12));
     lv_obj_set_style_bg_color(tx_dot, COLOR_CHART_TX, 0);
     lv_obj_set_style_bg_opa(tx_dot, LV_OPA_COVER, 0);
     lv_obj_set_style_radius(tx_dot, LV_RADIUS_CIRCLE, 0);
@@ -181,7 +182,7 @@ void ui_traffic_create(lv_obj_t *parent)
 
     /* The chart itself */
     g_chart = lv_chart_create(chart_card);
-    lv_obj_set_size(g_chart, LV_PCT(100), 300);
+    lv_obj_set_size(g_chart, LV_PCT(100), ui_scale(300));
     lv_chart_set_type(g_chart, LV_CHART_TYPE_LINE);
     lv_chart_set_point_count(g_chart, APP_HISTORY_LONG_LEN);
     lv_chart_set_div_line_count(g_chart, 5, 6);
@@ -190,7 +191,7 @@ void ui_traffic_create(lv_obj_t *parent)
     lv_obj_set_style_bg_color(g_chart, COLOR_CARD, 0);
     lv_obj_set_style_bg_opa(g_chart, LV_OPA_COVER, 0);
     lv_obj_set_style_border_width(g_chart, 0, 0);
-    lv_obj_set_style_pad_all(g_chart, 4, 0);
+    lv_obj_set_style_pad_all(g_chart, ui_scale(4), 0);
     lv_obj_set_style_line_color(g_chart, lv_color_hex(0x2A2A4A), LV_PART_MAIN);
     lv_obj_set_style_size(g_chart, 0, LV_PART_INDICATOR);
     lv_obj_set_style_line_width(g_chart, 2, LV_PART_ITEMS);
@@ -203,8 +204,8 @@ void ui_traffic_create(lv_obj_t *parent)
     /* ── Daily totals card ─────────────────────────────────────────── */
     lv_obj_t *totals_card = ui_create_card(parent, LV_PCT(100), LV_SIZE_CONTENT);
     lv_obj_set_flex_flow(totals_card, LV_FLEX_FLOW_COLUMN);
-    lv_obj_set_style_pad_all(totals_card, 10, 0);
-    lv_obj_set_style_pad_row(totals_card, 4, 0);
+    lv_obj_set_style_pad_all(totals_card, ui_pad_normal(), 0);
+    lv_obj_set_style_pad_row(totals_card, ui_scale(4), 0);
 
     ui_create_section_header(totals_card, "Daily Totals");
 
@@ -214,7 +215,7 @@ void ui_traffic_create(lv_obj_t *parent)
     lv_obj_set_flex_flow(totals_row, LV_FLEX_FLOW_ROW);
     lv_obj_set_flex_align(totals_row, LV_FLEX_ALIGN_SPACE_EVENLY,
                           LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
-    lv_obj_set_style_pad_column(totals_row, 16, 0);
+    lv_obj_set_style_pad_column(totals_row, ui_scale(16), 0);
     lv_obj_clear_flag(totals_row, LV_OBJ_FLAG_SCROLLABLE);
 
     g_stat_daily_rx    = ui_create_stat_label(totals_row, LV_SYMBOL_DOWN " RX Today");

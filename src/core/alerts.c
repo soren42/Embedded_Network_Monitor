@@ -19,6 +19,19 @@ static int g_hyst_counters[APP_MAX_INTERFACES][ALERT_TYPE_COUNT];
 
 static const config_t *g_cfg;
 
+/* Interfaces to ignore for alerts */
+#define MAX_IGNORE_IFACES 8
+static char g_ignore_ifaces[MAX_IGNORE_IFACES][APP_IFACE_NAME_MAX];
+static int g_ignore_count;
+
+static int is_ignored_iface(const char *name)
+{
+    for (int i = 0; i < g_ignore_count; i++) {
+        if (strcmp(g_ignore_ifaces[i], name) == 0) return 1;
+    }
+    return 0;
+}
+
 static void push_alert(alert_type_t type, alert_severity_t sev,
                         const char *iface, const char *msg)
 {
@@ -54,6 +67,32 @@ void alerts_init(const config_t *cfg)
     g_alert_count = 0;
     g_alert_head = 0;
     g_active_count = 0;
+
+    /* Parse ignored interfaces list */
+    g_ignore_count = 0;
+    const char *ignore = config_get_str(cfg, "alert_ignore_ifaces", "");
+    if (ignore && ignore[0] != '\0') {
+        /* Parse comma-separated list */
+        char buf[256];
+        strncpy(buf, ignore, sizeof(buf) - 1);
+        buf[sizeof(buf) - 1] = '\0';
+
+        char *tok = strtok(buf, ",");
+        while (tok && g_ignore_count < MAX_IGNORE_IFACES) {
+            /* Trim whitespace */
+            while (*tok == ' ') tok++;
+            char *end = tok + strlen(tok) - 1;
+            while (end > tok && *end == ' ') { *end = '\0'; end--; }
+
+            if (*tok != '\0') {
+                strncpy(g_ignore_ifaces[g_ignore_count], tok,
+                        APP_IFACE_NAME_MAX - 1);
+                g_ignore_ifaces[g_ignore_count][APP_IFACE_NAME_MAX - 1] = '\0';
+                g_ignore_count++;
+            }
+            tok = strtok(NULL, ",");
+        }
+    }
 }
 
 void alerts_check(const void *state_ptr)
@@ -65,6 +104,9 @@ void alerts_check(const void *state_ptr)
 
     for (int i = 0; i < state->num_ifaces; i++) {
         const net_iface_state_t *iface = &state->ifaces[i];
+
+        /* Skip ignored interfaces */
+        if (is_ignored_iface(iface->info.name)) continue;
 
         /* Check interface down */
         if (!iface->info.is_up || !iface->info.is_running) {

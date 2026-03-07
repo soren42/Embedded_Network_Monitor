@@ -1,4 +1,5 @@
 #include "ui_theme.h"
+#include "ui_layout.h"
 
 /* ── Static style objects ───────────────────────────────────────────── */
 static lv_style_t style_screen;
@@ -12,10 +13,34 @@ static lv_style_t style_status_ok;
 static lv_style_t style_status_warn;
 static lv_style_t style_status_err;
 
+/* Font tier (selected at init based on display size) */
+static const lv_font_t *g_font_title;
+static const lv_font_t *g_font_normal;
+static const lv_font_t *g_font_small;
+
 /* ── Initialisation ─────────────────────────────────────────────────── */
 
 void ui_theme_init(void)
 {
+    /* Select font tier based on shorter screen dimension */
+    int min_dim = ui_get_hor_res();
+    int vr = ui_get_ver_res();
+    if (vr < min_dim) min_dim = vr;
+
+    if (min_dim <= 400) {
+        g_font_small  = &lv_font_montserrat_10;
+        g_font_normal = &lv_font_montserrat_14;
+        g_font_title  = &lv_font_montserrat_18;
+    } else if (min_dim <= 600) {
+        g_font_small  = &lv_font_montserrat_12;
+        g_font_normal = &lv_font_montserrat_16;
+        g_font_title  = &lv_font_montserrat_22;
+    } else {
+        g_font_small  = &lv_font_montserrat_14;
+        g_font_normal = &lv_font_montserrat_20;
+        g_font_title  = &lv_font_montserrat_28;
+    }
+
     /* Screen background */
     lv_style_init(&style_screen);
     lv_style_set_bg_color(&style_screen, COLOR_BG);
@@ -28,21 +53,21 @@ void ui_theme_init(void)
     lv_style_set_radius(&style_card, 12);
     lv_style_set_border_color(&style_card, COLOR_CARD_BORDER);
     lv_style_set_border_width(&style_card, 1);
-    lv_style_set_pad_all(&style_card, 10);
+    lv_style_set_pad_all(&style_card, ui_pad_normal());
 
     /* Title label */
     lv_style_init(&style_title);
-    lv_style_set_text_font(&style_title, &lv_font_montserrat_28);
+    lv_style_set_text_font(&style_title, g_font_title);
     lv_style_set_text_color(&style_title, COLOR_TEXT_PRIMARY);
 
     /* Large value label */
     lv_style_init(&style_value_large);
-    lv_style_set_text_font(&style_value_large, &lv_font_montserrat_20);
+    lv_style_set_text_font(&style_value_large, g_font_normal);
     lv_style_set_text_color(&style_value_large, COLOR_TEXT_PRIMARY);
 
     /* Small / secondary value label */
     lv_style_init(&style_value_small);
-    lv_style_set_text_font(&style_value_small, &lv_font_montserrat_14);
+    lv_style_set_text_font(&style_value_small, g_font_small);
     lv_style_set_text_color(&style_value_small, COLOR_TEXT_SECONDARY);
 
     /* Nav-bar button (inactive) */
@@ -85,6 +110,6 @@ const lv_style_t *ui_get_style_status_err(void)   { return &style_status_err;  }
 
 /* ── Font getters ───────────────────────────────────────────────────── */
 
-const lv_font_t *ui_font_title(void)  { return &lv_font_montserrat_28; }
-const lv_font_t *ui_font_normal(void) { return &lv_font_montserrat_20; }
-const lv_font_t *ui_font_small(void)  { return &lv_font_montserrat_14; }
+const lv_font_t *ui_font_title(void)  { return g_font_title;  }
+const lv_font_t *ui_font_normal(void) { return g_font_normal; }
+const lv_font_t *ui_font_small(void)  { return g_font_small;  }

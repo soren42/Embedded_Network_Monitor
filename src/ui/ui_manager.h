@@ -5,7 +5,8 @@
 
 /* ── Screen identifiers ─────────────────────────────────────────────── */
 typedef enum {
-    SCREEN_DASHBOARD = 0,
+    SCREEN_STATUS = 0,    /* network health overview (default) */
+    SCREEN_DASHBOARD,
     SCREEN_TRAFFIC,
     SCREEN_ALERTS,
     SCREEN_MORE,

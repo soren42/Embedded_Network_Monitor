@@ -1,6 +1,6 @@
 /**
  * @file main.c
- * @brief LP Network Monitor - Entry point
+ * @brief Embedded Network Monitor - Entry point
  *
  * Initializes LVGL, display, touchscreen, network collectors,
  * and UI, then runs the main event loop.
@@ -20,6 +20,7 @@
 #include "config.h"
 #include "ui_manager.h"
 #include "ui_theme.h"
+#include "ui_layout.h"
 #include "net_collector.h"
 #include "alerts.h"
 #include "data_store.h"
@@ -62,7 +63,7 @@ int main(int argc, char *argv[])
 
     /* Initialize logging */
     log_init(LOG_LEVEL_INFO);
-    LOG_INFO("LP Network Monitor starting...");
+    LOG_INFO("Embedded Network Monitor v3.0.0 starting...");
 
     /* Load configuration */
     if (config_load(&g_config, config_path) < 0) {
@@ -86,7 +87,8 @@ int main(int argc, char *argv[])
     }
     LOG_INFO("Touchscreen initialized");
 
-    /* Initialize UI theme and styles */
+    /* Initialize layout geometry and UI theme */
+    ui_layout_init();
     ui_theme_init();
 
     /* Initialize network data collector */
@@ -100,7 +102,7 @@ int main(int argc, char *argv[])
 
     /* Create UI screens and show dashboard */
     ui_manager_init();
-    ui_manager_show(SCREEN_DASHBOARD);
+    ui_manager_show(SCREEN_STATUS);
 
     LOG_INFO("Initialization complete, entering main loop");
 
