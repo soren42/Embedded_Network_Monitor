@@ -122,8 +122,8 @@ dns_test_hostname = google.com
 
 # WiFi configuration
 wifi_enabled = 1
-wifi_ssid = solarian
-wifi_password = S0l@r1@n
+wifi_ssid = YOUR_SSID
+wifi_password = YOUR_PASSCODE
 
 # Alert thresholds
 alert_bw_warn_pct = 80
