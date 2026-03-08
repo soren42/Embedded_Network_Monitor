@@ -1,0 +1,18 @@
+idf_component_register(
+    SRCS
+        "main.c"
+        "sat_receiver.c"
+        "sat_data.c"
+        "sat_ui.c"
+        "sat_gauges.c"
+        "boards/board_ws_1_28.c"
+    INCLUDE_DIRS
+        "."
+        "../../protocol"
+    REQUIRES
+        driver
+        esp_lcd
+        esp_timer
+        tinyusb
+    WHOLE_ARCHIVE
+)
