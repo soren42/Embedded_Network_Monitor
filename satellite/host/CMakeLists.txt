@@ -25,6 +25,19 @@ target_include_directories(sat_feeder PRIVATE
     ${CJSON_DIR}
 )
 
+# Test sender (sends synthetic data for display verification)
+add_executable(sat_test_sender
+    src/sat_test_sender.c
+    src/sat_serial.c
+)
+
+target_include_directories(sat_test_sender PRIVATE
+    src
+    ../protocol
+)
+
+target_link_libraries(sat_test_sender m)
+
 # Strip in release mode
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
     add_custom_command(TARGET sat_feeder POST_BUILD

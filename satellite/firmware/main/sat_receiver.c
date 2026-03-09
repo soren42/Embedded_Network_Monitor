@@ -14,7 +14,9 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "tinyusb.h"
-#include "tusb_cdc_acm.h"
+#include "tinyusb_cdc_acm.h"
+
+#include <string.h>
 
 static const char *TAG = "sat_rx";
 
@@ -41,7 +43,6 @@ static uint32_t millis(void)
 
 static void process_frame(void)
 {
-    /* Validate CRC */
     uint16_t expected_len = sizeof(sat_header_t) + s_header.payload_len;
     uint16_t crc_rx = s_frame_buf[expected_len] |
                       ((uint16_t)s_frame_buf[expected_len + 1] << 8);
@@ -145,24 +146,27 @@ static void receiver_task(void *arg)
 
 void sat_receiver_init(void)
 {
-    /* Initialize TinyUSB */
+    /* Initialize TinyUSB driver with default descriptors (from Kconfig) */
     const tinyusb_config_t tusb_cfg = {
-        .device_descriptor = NULL,
-        .string_descriptor = NULL,
-        .external_phy = false,
+        .port = 0,
+        .task = {
+            .size = 4096,
+            .priority = 5,
+            .xCoreID = 0,
+        },
+        .descriptor = { 0 },  /* Use Kconfig defaults */
     };
     ESP_ERROR_CHECK(tinyusb_driver_install(&tusb_cfg));
 
+    /* Initialize CDC ACM */
     tinyusb_config_cdcacm_t acm_cfg = {
-        .usb_dev = TINYUSB_CDC_ACM_0,
         .cdc_port = TINYUSB_CDC_ACM_0,
-        .rx_unread_buf_sz = 256,
         .callback_rx = NULL,
         .callback_rx_wanted_char = NULL,
         .callback_line_state_changed = NULL,
         .callback_line_coding_changed = NULL,
     };
-    ESP_ERROR_CHECK(tusb_cdc_acm_init(&acm_cfg));
+    ESP_ERROR_CHECK(tinyusb_cdcacm_init(&acm_cfg));
 
     s_state = RX_STATE_SYNC;
     s_frame_pos = 0;

@@ -106,14 +106,15 @@ static void format_rate_short(uint32_t bytes_per_sec, char *buf, int len)
 
 static void format_duration_short(uint32_t seconds, char *buf, int len)
 {
-    if (seconds >= 86400)
-        snprintf(buf, len, "%ud %uh", seconds / 86400, (seconds % 86400) / 3600);
-    else if (seconds >= 3600)
-        snprintf(buf, len, "%uh %um", seconds / 3600, (seconds % 3600) / 60);
-    else if (seconds >= 60)
-        snprintf(buf, len, "%um %us", seconds / 60, seconds % 60);
+    unsigned s = (unsigned)seconds;
+    if (s >= 86400)
+        snprintf(buf, len, "%ud %uh", s / 86400, (s % 86400) / 3600);
+    else if (s >= 3600)
+        snprintf(buf, len, "%uh %um", s / 3600, (s % 3600) / 60);
+    else if (s >= 60)
+        snprintf(buf, len, "%um %us", s / 60, s % 60);
     else
-        snprintf(buf, len, "%us", seconds);
+        snprintf(buf, len, "%us", s);
 }
 
 static void update_callback(lv_timer_t *timer)

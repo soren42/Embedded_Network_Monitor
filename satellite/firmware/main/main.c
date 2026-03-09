@@ -35,7 +35,7 @@ void app_main(void)
     lv_init();
 
     /* Initialize board-specific display and touch */
-    lv_disp_t *disp = hal_display_init();
+    hal_display_init();
     hal_touch_init();
 
     /* Set up LVGL tick timer */

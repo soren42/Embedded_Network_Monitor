@@ -1,10 +1,5 @@
 dependencies:
   lvgl/lvgl: "~8.3.0"
-  esp_lcd_gc9a01:
-    version: "*"
-    rules:
-      - if: "idf_version >=5.0"
-  espressif/esp_lcd_touch_cst816s:
-    version: "*"
-    rules:
-      - if: "idf_version >=5.0"
+  espressif/esp_tinyusb: "*"
+  espressif/esp_lcd_gc9a01: "*"
+  espressif/esp_lcd_touch_cst816s: "*"
