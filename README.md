@@ -5,6 +5,8 @@ A real-time network monitoring application for embedded Linux devices. Built in 
 ![Language](https://img.shields.io/badge/language-C99-green)
 ![UI](https://img.shields.io/badge/UI-LVGL%208.3-orange)
 ![License](https://img.shields.io/badge/license-MIT-lightgrey)
+![Latest Release](https://img.shields.io/github/v/release/soren42/Embedded_Network_Monitor)
+![Last Updated](https://img.shields.io/github/last-commit/soren42/Embedded_Network_Monitor?label=last%20updated)
 
 ## Features
 
